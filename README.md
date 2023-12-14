@@ -151,4 +151,4 @@ Feel free to reach out if you have any questions or need further clarification.
 
 **Note:** Assumptions should be communicated via the classroom if any detail is missing from the project document about the protocol.
 
-*Visualization of the Selective Repeat algorithm can be found [here]([link-to-visualization](https://www.baeldung.com/cs/selective-repeat-protocol#example)https://www.baeldung.com/cs/selective-repeat-protocol#example)
+*Visualization of the Selective Repeat algorithm can be found [here](https://www.baeldung.com/cs/selective-repeat-protocol#example).*
