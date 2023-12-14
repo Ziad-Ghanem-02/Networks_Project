@@ -6,24 +6,13 @@ This repository contains the source code and documentation for the term project 
 
 ### Project Overview
 
-In this project, you will implement a simulation of data link layer protocols using the Selective Repeat algorithm. The communication takes place between two nodes ([Node0, Node1]) connected through a noisy channel, where packets may experience various errors such as corruption, duplication, delay, or loss. The system's network topology is illustrated in Figure 1.
-
-![System Network Topology](docs/images/system_network_topology.png)
-
+In this project, you will implement a simulation of data link layer protocols using the Selective Repeat algorithm. The communication takes place between two nodes ([Node0, Node1]) connected through a noisy channel, where packets may experience various errors such as corruption, duplication, delay, or loss.
 ### System Inputs
 
 1. Each node reads its list of messages from a specific input text file (`input0.txt` for Node0 and `input1.txt` for Node1).
 2. Messages are formatted with a 4-bits binary prefix indicating the possibility of [Modification, Loss, Duplication, Delay].
 3. Errors are applied to the message itself, and Checksum is applied to the original message before framing.
 
-#### Example of Input File Format (Figure 2)
-
-```
-1010 Data Link
-0101 Computer Networks
-```
-
-![Example of Input File](docs/images/example_input_file.png)
 
 ### Error Codes
 
@@ -35,9 +24,86 @@ Errors are represented in a binary format (4 bits). Table 1 provides details abo
 |------------|---------------------------------------------|
 | 0000       | No error                                    |
 | 0001       | Delay                                       |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=5.5 the message is received.           |
 | 0010       | Duplication                                 |
-| 0011       | Make two versions of the message with delay  |
-| ...        | ...                                         |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=1.5 version 1 of the message is received.|
+|            |   @t=1.6 version 2 of the message is received.|
+| 0011       | Make two versions of the message and add to their|
+|            | sending time the delay error.                |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=5.5 version 1 of the message is received.|
+|            |   @t=5.6 version 2 of the message is received.|
+| 0100       | Loss                                        |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=0.5 read the next line.                 |
+| 0101       | Loss                                        |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=0.5 read the next line.                 |
+| 0110       | Loss of the both messages                   |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=0.5 read the next line.                 |
+| 0111       | Loss of both messages                        |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=0.5 read the next line.                 |
+| 1000       | Modification                                |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=1.5 the modified message is received.  |
+| 1001       | Modification and delay                      |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=5.5 the modified message is received.  |
+| 1010       | Modification and Duplication                |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=1.5 version 1 of the modified message is received.|
+|            |   @t=1.6 version 2 of the modified message is received.|
+| 1011       | Modification and Duplication and Delay      |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=5.5 version 1 of the modified message is received.|
+|            |   @t=5.6 version 2 of the modified message is received.|
+| 1100       | Loss                                        |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=0.5 read the next line.                 |
+| 1101       | Loss                                        |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=0.5 read the next line.                 |
+| 1110       | Loss for both messages                      |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=0.5 read the next line.                 |
+| 1111       | Loss for both messages                      |
+|            |   For example, using the default delays:     |
+|            |   @t=0 read line                             |
+|            |   @t=0.5 end processing time                 |
+|            |   @t=0.5 read the next line.                 |
+
 
 ### Coordinator
 
