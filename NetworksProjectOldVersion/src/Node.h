@@ -20,19 +20,18 @@
 #include <bitset>
 #include <vector>
 #include "string.h"
-#include <fstream>
 
 using namespace omnetpp;
 
 /**
  * TODO - Generated class
  */
-class Node : public omnetpp::cSimpleModule
+class Node : public cSimpleModule
 {
   protected:
     int sender = -1; //if 1 then I'm the sender, if 0 I'm the receiver, if -1 then still unset
     int buffersUsed; //number of buffers that I've used so far
-    //int frameNumber; //for setting sequence numbers
+    int frameNumber; //for setting sequence numbers
     int frameExpected; //lower edge of receiver window
     int tooFar; //upper edge of receiver window PLUS ONE (3ashan between function is implemented be tare2a weird kda)
     int ackExpected; //lower edge of sender window
@@ -40,15 +39,11 @@ class Node : public omnetpp::cSimpleModule
     int nodeNumber; //if I'm Node0 then nodeNumber=0, if I'm Node1 then nodeNumber=1
     double processingTime;
     bool noNak;
-    //TODO:adjust par hena
-    //bool arrived[par("WR").intValue()]; // Used by receiver to check if it has received frame "i"//TODO: check if this creates error cuz I'm not using dynamic allocation
-    std::vector<bool> arrived;
+    bool arrived[par("WR").intValue()]; // Used by receiver to check if it has received frame "i"//TODO: check if this creates error cuz I'm not using dynamic allocation
     int WR;
     int WS;
     int TO;
-    std::ifstream file;
-    std::vector<std::string> buffers; //buffers to store messages we have been receiving and messages we're currently trying to send
-    std::vector<cMessage*> timeouts; //used to store current timeouts
+    //TODO: string buffers for sender and receiver
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
 };

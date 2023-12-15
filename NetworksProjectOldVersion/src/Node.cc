@@ -15,10 +15,9 @@
 
 #include "Node.h"
 #include "MyMessage_m.h"
-#include <iostream>
-#include <fstream>
 
-Define_Module(Node);
+//TODO: check eh lazmet the line below
+//Define_Module(Node);
 #define MAX_SEQ 9999 //to make debugging easier
 
 void Node::initialize()
@@ -30,24 +29,16 @@ void Node::initialize()
     //frameNumber = 0; //Assumption: frame number of 1st sent frame is 1
     frameExpected = 0;
     WR = par("WR").intValue();
-    WS = par("WS").intValue();
-    //WR = 5;
     tooFar = WR; //Note that last frame I'll send according to this value is "WR - 1" cuz of how between function works
     ackExpected = 0;
     nextFrameToSend = 0;
     processingTime = par("PT").doubleValue();
-    //processingTime = 5;
     noNak = true;
     for (int i = 0; i < WR;i++)
     {
-        std::string dummyTimeout = "dummy timeout";
-        cMessage *dummyTimeoutMsg = new cMessage(dummyTimeout.c_str());
-        arrived.push_back(false);
-        buffers.push_back("empty"); //to initialize the vector with (WR) elements. Otherwise trying to access buffers[3] later on would return segmentation error
-        timeouts.push_back(dummyTimeoutMsg); //to initialize the vector with (WR) elements. Otherwise trying to access timeouts [3] later on would return segmentation error
+        arrived[i] = false;
     }
     TO = par("TO").doubleValue();
-    //TO = 5;
 }
 
 //checking if  a<=b<c (NOT a<=b<=c)
@@ -76,11 +67,9 @@ bool between(int a,int b,int c)
 void sendData(int frameKind, int frameNumber, int frameExpected, cMessage *msg )
 {
     //0 for data, 1 for ACK, 2 for NAK, 3 for Coordinator initialize, think of this as part 2 of header
-    //TODO: implement sending in this function. Ana bas 5ayf a send a cMessage as a parameter fe function, dont know if haye7sal ay moshkla
+    //TODO: implement sending in this function. Ana bas 5ayf a send cMessage fe function, dont know if haye7sal ay moshkla
 
 }
-
-//comparing given value with MAX_SEQ to ensure frameExpected, tooFar, ackExpected, nextFrameToSend are between 0,(MAX_SEQ-1)
 int circularIncrement(int x)
 {
     x++;
@@ -101,28 +90,6 @@ void Node::handleMessage(cMessage *msg)
         EV<< mmsg->getM_Payload();
         EV<<"   and check bits of ...";
         EV<< mmsg->getMycheckbits().to_string();
-
-        if(msg->isSelfMessage())
-        {
-            //this must mean sender is sending itself timeout signal because it didnt receive ACK
-            if(sender != 1)
-            {
-                //For debugging bas
-                //if sender variable is not set correctly hena yeb2a akeed fe 7aga 8alat
-                std::cout << "Fe 7aga 8alat, either receiver is sending timeout which should never happen or sender variable not set correctly"<<endl;
-            }
-            else
-            {
-                //Now I'm sure sender==1
-                //I should resend the lower edge of the sender window
-                std::string payload = buffers[ackExpected%WR]; //retrieving frame at lower edge of sender window
-                MyMessage_Base * msgSend = new MyMessage_Base(payload.c_str());
-                msgSend->setM_Type(0); //sender is sending data
-                msgSend->setM_Payload(payload.c_str());
-                msgSend->setSeq_Num(ackExpected); //setting sequence number to be sequence number of frame at lower edge of sender window
-                sendDelayed(msgSend,processingTime,"out"); //For now ignore this TODO, initially sendDelayed wasnt working with our custom MyMessage_Base class bas el7 it started working lewa7daha TODO: exchange every sendDelayed with scheduleAt
-            }
-        }
         if (sender == -1) //kda I still don't know if I'm sender or receiver
         {
             //0 for data, 1 for ACK, 2 for NAK, 3 for Coordinator initialize, think of this as part 2 of header
@@ -135,18 +102,13 @@ void Node::handleMessage(cMessage *msg)
                 {
                     // Open node0.txt
                     nodeNumber = 0;
-                    //std::ifstream file("node0.txt");
-                    //fileVar = file;
-                    file.open("node0.txt");
+                    std::ifstream file("node0.txt");
                 }
                 else if(strcmp(getName(),"node1") == 0)
                 {
                     // Open node1.txt
                     nodeNumber = 1;
-                    //std::ifstream file("node1.txt");
-                    //fileVar = file;
-                    file.open("node1.txt");
-
+                    std::ifstream file("node1.txt");
                 }
                 else
                 {
@@ -162,50 +124,38 @@ void Node::handleMessage(cMessage *msg)
 
         if (sender == 1)
         {
- //sender code
+                //sender code
 
-            //ignore the counter variable, I was experimenting with a different approach
-            //int counter = 1; //this counter will be used in while loop to calculate processing time for each frame
-
-            //while number of buffers used less than window size (so I still have empty buffers) and I havent reached end of file yet, read a new line/message
+                //msgSend ->setM_Payload(payload);
+                //0 for data, 1 for ACK, 2 for NAK, 3 for Coordinator initialize, think of this as part 2 of header
+                //msgSend->setM_Type(0);
+                //while number of buffers used less than window size (so I still have empty buffers) and I havent reached end of file yet, read a new line/message
                 while (buffersUsed < par("WS").intValue() && !(file.eof()))
                 {
+
+                    //since sender is "storing" frame from file
+                    //TODO: store string I should send in string array
+                    buffersUsed++;
                     std::string errorCode;
                     std::string payload;
-                    std::string line;
                     // Read the error code and payload
-                    std::getline(file, line);
                     errorCode = line.substr(0, 3);
                     payload = line.substr(5, line.length() - 5);
-                    //store string I should send in string vector in case I need to send it tany cuz of timeout
-                    //since sender is "storing" frame from file
-                    buffers[nextFrameToSend%WR] = payload;
-                    buffersUsed++;
                     // Set the error code and payload
                     MyMessage_Base * msgSend = new MyMessage_Base(payload.c_str());
                     //0 for data, 1 for ACK, 2 for NAK, 3 for Coordinator initialize, think of this as part 2 of header
                     msgSend->setM_Type(0); //sender is sending data
                     msgSend->setM_Payload(payload.c_str());
                     msgSend->setSeq_Num(nextFrameToSend);
+                    nextFrameToSend = circularIncrement(nextFrameToSend); //sender received frame from "Network Layer" so should advance upper edge of window
                     //TODO:calculate checksum
                     //msgSend->setMycheckbits(mycheckbits)
                     //TODO:byte stuffing
-
-                    sendDelayed(msgSend,processingTime,"out"); //For now ignore this TODO, initially sendDelayed wasnt working with our custom MyMessage_Base class bas el7 it started working lewa7daha TODO: exchange every sendDelayed with scheduleAt
-                    //TODO: can I cascade sendDelayed function? (el moshkla ely shara7taha fel voice note)
-
-                    //Ignore 2 lines below, I was experimenting
-                   // msgSend->setName("Frame to send");
-                    //scheduleAt(simTime()+ processingTime, msgSend);
-
-
-                    //scheduling timer
+                    //TODO: exchange every sendDelayed with scheduleAt
+                    sendDelayed(msgSend,processingTime,"out");
+                    //TODO: can I cascade sendDelayed function?
                     //TODO: set frame number in frame timeout or check if i dont need to
-                    std::string timer = "frame timeout";
-                    cMessage *timermsg = new cMessage(timer.c_str());
-                    scheduleAt(simTime()+TO, timermsg);
-                    timeouts[nextFrameToSend%WR] = timermsg;
-                    nextFrameToSend = circularIncrement(nextFrameToSend); //sender received frame from "Network Layer" so should advance upper edge of window
+                    scheduleAt(simTime()+TO, "frame timeout");
                 }
 
                 //0 for data, 1 for ACK, 2 for NAK, 3 for Coordinator initialize, think of this as part 2 of header
@@ -213,18 +163,19 @@ void Node::handleMessage(cMessage *msg)
                 if(mmsg->getM_Type() == 1)
                 {
                     //TODO:turn this to ACK for each frame
+                    buffersUsed--;
                     //while loop to keep acknowledging if I received cumulative ACK
                      while(between(ackExpected,mmsg->getAck_Num(),nextFrameToSend))
                      {
-                         buffersUsed--;
-                         buffers[ackExpected%WR] = "no longer using this buffer";
-                         cancelEvent(timeouts[ackExpected%WR]); //Canceling timer since I received frame
+
+                         //TODO: this should be circular increment not normal ++
+                         //circular increment should be compared with MAX_SEQ
                          ackExpected = circularIncrement(ackExpected); //sender received in order ack so should advance lower edge of window
                      }
                      //reached end of file and acknowledged kolo
-                     if(ackExpected == nextFrameToSend && (file.eof()))
+                     if(ackExpected == nextFrameToSend && (file.eof))
                      {
-                         endSimulation();
+                         //TODO: end simulation
                      }
                 }
                 //0 for data, 1 for ACK, 2 for NAK, 3 for Coordinator initialize, think of this as part 2 of header
@@ -235,12 +186,13 @@ void Node::handleMessage(cMessage *msg)
                     if (between(ackExpected,mmsg->getAck_Num(),nextFrameToSend))
                     {
                         //I should resend the frame the receiver is requesting
-                        std::string payload = buffers[(mmsg->getAck_Num())%WR]; //retrieving frame receiver is requesting from buffer
-                        MyMessage_Base * msgSend = new MyMessage_Base(payload.c_str());
+                        //set dummy to be string receiver is requesting
+                        std::string dummy = "set this to be frame user is requesting";
+                        MyMessage_Base * msgSend = new MyMessage_Base(dummy.c_str());
                         msgSend->setM_Type(0); //sender is sending data
-                        msgSend->setM_Payload(payload.c_str());
-                        msgSend->setSeq_Num(mmsg->getAck_Num()); //setting sequence number to sequence number receiver is requesting
-                        sendDelayed(msgSend,processingTime,"out"); //For now ignore this TODO, initially sendDelayed wasnt working with our custom MyMessage_Base class bas el7 it started working lewa7daha TODO: exchange every sendDelayed with scheduleAt
+                        msgSend->setM_Payload(dummy.c_str());
+                        msgSend->setSeq_Num(0); //TODO: set sequence number to sequence number receiver is requesting
+                        sendDelayed(msgSend,processingTime,"out"); //TODO: exchange every sendDelayed with scheduleAt
 
                     }
                 }
@@ -253,11 +205,8 @@ void Node::handleMessage(cMessage *msg)
                 if (mmsg->getM_Type() == 0)
                 {
                     //checking if received message is out of order and noNak is true (meaning we still havent sent a NAK)
-                    //if (mmsg->getSeq_Num() != frameExpected && noNak)\
-                    //TODO: Ask TAs if we should use noNak boolean variable, wala I can send multiple NAKs wara b3d 3ady
-                    if (mmsg->getSeq_Num() != frameExpected)
+                    if (mmsg->getSeq_Num() != frameExpected && noNak)
                     {
-                        noNak = false;
                         std::string dummy = "this frame is NAK";
                         MyMessage_Base * msgSendFromReceiver = new MyMessage_Base(dummy.c_str());
                         msgSendFromReceiver->setM_Type(2); //2 cuz we're sending NAK
@@ -268,8 +217,8 @@ void Node::handleMessage(cMessage *msg)
                     }
                     else
                     {
-               //Nevermind, ignore these comments no need for Ack timeout
-                        //check if I need ack number hena
+                        //Nevermind no need for Ack timeout
+                        //TODO: check if I need ack number hena
                         //No need to set ack number just resend ack
                         //scheduleAt(simTime()+TO, "Ack timeout");
                     }
@@ -283,7 +232,6 @@ void Node::handleMessage(cMessage *msg)
                         if(!modified)
                         {
                             arrived[mmsg->getSeq_Num()%WR] = true;
-                            buffers[mmsg->getSeq_Num()%WR] = mmsg->getM_Payload(); //storing message we've received
                             //if lower edge of receiver window has arrived then I will advance receiver buffer
                             //TODO: trace en the while condition tamam
                             while (arrived[frameExpected%WR])
@@ -291,32 +239,28 @@ void Node::handleMessage(cMessage *msg)
                                 //Received in order frame so reset Nak boolean
                                 noNak = true;
                                 arrived[mmsg->getSeq_Num()%WR] = false; //to use it for next batch
-                                buffers[mmsg->getSeq_Num()%WR] = "receiver buffer no longer in use"; //storing message we've received
+                                //TODO: this should be circular increment not normal ++
+                                //circular increment should be compared with MAX_SEQ
                                 frameExpected = circularIncrement(frameExpected);
                                 tooFar = circularIncrement(tooFar); //advancing window of receiver since we received in order frame
                                 std::string dummy = "this frame is ACK";
-                                int ackNumber = frameExpected; //since if we were expecting frame 2 and frame 2 was received then I should send ack for frame 3. Note that ackNumber is set after frameExpected is incremented to achieve this
+                                //TODO: set ackNumber
+                                int ackNumber = 10000000000000000000000000000000000000000000000000000000000;
                                 MyMessage_Base * msgSendFromReceiver = new MyMessage_Base(dummy.c_str());
                                 msgSendFromReceiver->setM_Type(1); //1 cuz we're sending ACK
                                 msgSendFromReceiver->setM_Payload(dummy.c_str());
                                 msgSendFromReceiver->setSeq_Num(0); //sequence number for ACK is irrelevant (since receiver doesnt send back data)
                                 msgSendFromReceiver->setAck_Num(ackNumber);
                                 send(msgSendFromReceiver,"out"); //No delay for ACK
-                            //Nevermind no need for Ack timeout
-                                //schedule ack timer
+                                //Nevermind no need for Ack timeout
+                                //TODO: schedule ack timer
                             }
 
                         }
                         else
                         {
                             //modified error occured so should send NAK
-                            std::string dummy = "this frame is NAK";
-                            MyMessage_Base * msgSendFromReceiver = new MyMessage_Base(dummy.c_str());
-                            msgSendFromReceiver->setM_Type(2); //2 cuz we're sending NAK
-                            msgSendFromReceiver->setM_Payload(dummy.c_str());
-                            msgSendFromReceiver->setSeq_Num(0); //sequence number for NAK is irrelevant
-                            msgSendFromReceiver->setAck_Num(mmsg->getSeq_Num()); //setting NAK number to be frame number of the received frame that had modified error
-                            send(msgSendFromReceiver,"out"); //No delay for NAK
+                            //TODO: send NAK
                         }
 
 
